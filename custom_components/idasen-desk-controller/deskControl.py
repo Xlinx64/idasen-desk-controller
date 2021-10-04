@@ -26,7 +26,7 @@ class DeskController:
 
     def getStatus(self):
         print("Get status")
-        macAddress = self._address
+        macAddress = self.address
         child = pexpect.spawn(f'idasen-controller --mac-address {macAddress}', encoding='utf-8')
         index = child.expect(["was not found"])
         print(child.before)
