@@ -1,11 +1,11 @@
 """
-Linak DPG Desk Panel Integration
+Idasen Desk Controller Integration
 """
 
 from .const import DOMAIN
 
 async def async_setup(hass, config):
-    """Set up the Linak DPG component."""
+    """Set up the Idasen Desk Controller component."""
     if DOMAIN in config:
         hass.data[DOMAIN] = {}
 
@@ -25,7 +25,7 @@ async def async_setup(hass, config):
     return True
 
 async def async_setup_entry(hass, entry):
-    """Set up the Linak DPG platform."""
+    """Set up the Idasen Desk Controller platform."""
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "sensor")
     )

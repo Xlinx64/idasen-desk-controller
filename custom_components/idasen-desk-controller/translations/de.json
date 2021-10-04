@@ -1,10 +1,17 @@
 {
-  "title": "Linak DPG Desk Panel",
+  "title": "Idasen Controller",
   "config": {
+    "error": {
+      "invalid_device": "Das ausgewälte Gerät kann nicht verwendet werden!"
+    },
     "step": {
       "user": {
-        "title": "Mit Linak DPG Desk Panel verbinden",
-        "description": "Steuerung in Kopplungsmodus bringen und Gerät auswählen",
+        "title": "Idasen-Controller vorbereiten",
+        "description": "Steuerung in Kopplungsmodus bringen und fortfaren"
+      },
+      "connection": {
+        "title": "Idasen Controller verbinden",
+        "description": "Gerät auswählen",
         "data": {
           "name": "Name"
         }

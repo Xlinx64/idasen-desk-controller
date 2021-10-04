@@ -1,5 +1,5 @@
 """
-Wrapper for bluetoothctl
+Wrapper for idasen-controller
 """
 
 import time
@@ -10,8 +10,10 @@ class DeskController:
     """A wrapper for idasen-controller """
 
     def __init__(self):
-        """Initalize shell."""
+        """Initalize DeskController"""
         print("Init DeskController")
+        self._name = None
+        self._address = None
 
 
     def scanDevices(self):
@@ -19,7 +21,25 @@ class DeskController:
         child = pexpect.spawn('idasen-controller --scan', encoding='utf-8')
         child.expect(".*Found*")
         output = child.read()
+        child.close()
         return self.scanOutputToDict(output)
+
+    def getStatus(self):
+        print("Get status")
+        macAddress = self._address
+        child = pexpect.spawn(f'idasen-controller --mac-address {macAddress}', encoding='utf-8')
+        index = child.expect(["was not found"])
+        print(child.before)
+        if index == 0:
+            child.close()
+            return None
+        else:
+            output = child.read()
+            child.close()
+            return "GEIL"
+        #child.expect(".*Found*")
+        #output = child.read()
+        #return ""#self.scanOutputToDict(output)
 
     def clean_output(self, input):
         formatting = [

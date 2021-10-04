@@ -1,5 +1,5 @@
 """
-Platform for Linak DPG Desk Panel Integration
+Platform for Idasen Desk Controller Integration
 """
 
 import random
@@ -24,7 +24,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 class DeskSensor(Entity):
     """Representation of Height Sensor for Linak Desk."""
-    
+
     def __init__(self, config_entry):
         """Initialize the Linak DPG desk."""
         self._config_entry = config_entry
@@ -35,36 +35,36 @@ class DeskSensor(Entity):
         self._height = None
         self._offset = 70
         self._unit_of_measurement = "cm"
-        
+
     def update(self):
         """Update state of the device."""
         try:
             wrapper = BTctl()
             wrapper.connect(self._address)
-            
+
             if wrapper.gatt():
                 output = wrapper.attribute_read_value(HEIGHT_CHAR_ID)
-                
+
         except:
             self._state = STATE_OFF
-            
+
         else:
             if output:
                 hex_arr = []
-                
+
                 for value in output[-1].split(" "):
                     if value.strip():
                         if not value.endswith("..."):
                             hex_arr.append(value)
-                        
+
                 better_arr = " ".join(hex_arr).encode()
 
                 val = BTctl().convertHexStr(better_arr[0:5])
-                
+
                 if val:
                     self._state = float(val) / 100
                     self._height = self._state + self._offset
-            
+
     @property
     def unique_id(self) -> str:
         """Return the unique ID of the device."""
@@ -89,7 +89,7 @@ class DeskSensor(Entity):
     def address(self):
         """Return the address of the device."""
         return self._address
-        
+
     @property
     def device_state_attributes(self):
         """Return the state attributes of the device."""
@@ -98,5 +98,5 @@ class DeskSensor(Entity):
         attr["offset"] = self._offset
         attr["unit_of_measurement"] = self._unit_of_measurement
         attr["mac_address"] = self._address
-        
+
         return attr
