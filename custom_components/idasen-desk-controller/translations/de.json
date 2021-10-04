@@ -1,0 +1,14 @@
+{
+  "title": "Linak DPG Desk Panel",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mit Linak DPG Desk Panel verbinden",
+        "description": "Steuerung in Kopplungsmodus bringen und Gerät auswählen",
+        "data": {
+          "name": "Name"
+        }
+      }
+    }
+  }
+}

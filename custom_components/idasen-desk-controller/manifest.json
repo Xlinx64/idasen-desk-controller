@@ -1,0 +1,10 @@
+{
+  "domain": "linak_dpg",
+  "name": "Idasen Desk Controller",
+  "documentation": "https://github.com/Xlinx64/idasen-desk-controller",
+  "dependencies": [],
+  "codeowners": ["@Xilinx64"],
+  "requirements": ["pexpect==4.8.0", "idasen-controller==1.0.6"],
+  "config_flow": true,
+  "version": "1.0.0"
+}
