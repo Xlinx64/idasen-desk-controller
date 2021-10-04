@@ -12,8 +12,8 @@ class DeskController:
     def __init__(self):
         """Initalize DeskController"""
         print("Init DeskController")
-        self._name = None
-        self._address = None
+        self.name = None
+        self.address = None
 
 
     def scanDevices(self):

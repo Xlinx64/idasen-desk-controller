@@ -26,7 +26,7 @@ class IdasenControllerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def _get_entry(self): #TODO
         data = {
-            #"address": self._address,
+            #"address": self.address,
         }
         return self.async_create_entry(
             title=self._title,
@@ -62,17 +62,17 @@ class IdasenControllerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         })
 
         if user_input is not None:
-            self._controller._name = user_input.get("name")
-            self._controller._address = self._devices[self._controller._name]
-            print(self._controller._name)
-            print(self._controller._address)
+            self._controller.name = user_input.get("name")
+            self._controller.address = self._devices[self._controller.name]
+            print(self._controller.name)
+            print(self._controller.address)
 
             status = await self.hass.async_add_executor_job(self._testConnection)
 
             if status == None:
                 errors["base"] = "invalid_device"
             if not errors:
-                await self.async_set_unique_id(self._address)
+                await self.async_set_unique_id(self.address)
                 self._abort_if_unique_id_configured()
                 return self._get_entry()
 

@@ -7,7 +7,7 @@
     "step": {
       "user": {
         "title": "Idasen-Controller vorbereiten",
-        "description": "Steuerung in Kopplungsmodus bringen und fortfaren"
+        "description": "Steuerung in Kopplungsmodus bringen und fortfahren"
       },
       "connection": {
         "title": "Idasen Controller verbinden",
