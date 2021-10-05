@@ -2,7 +2,8 @@
   "title": "Idasen Controller",
   "config": {
     "error": {
-      "invalid_device": "Das ausgewälte Gerät kann nicht verwendet werden!"
+      "invalid_device": "Das ausgewälte Gerät kann nicht verwendet werden!",
+      "no_devices_found": "Keine Geräte gefunden!"
     },
     "step": {
       "user": {

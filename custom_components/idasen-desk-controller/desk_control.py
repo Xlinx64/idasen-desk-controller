@@ -4,7 +4,7 @@ Wrapper for idasen-controller
 
 import time
 import pexpect
-import sys
+
 
 class DeskController:
     """A wrapper for idasen-controller """
@@ -15,19 +15,20 @@ class DeskController:
         self.name = None
         self.address = None
 
-
-    def scanDevices(self):
+    def scan_devices(self):
+        """Scan devices"""
         print("Start scanning")
         child = pexpect.spawn('idasen-controller --scan', encoding='utf-8')
         child.expect(".*Found*")
         output = child.read()
         child.close()
-        return self.scanOutputToDict(output)
+        return self._scan_output_to_dict(output)
 
-    def getStatus(self):
+    def get_status(self):
+        """Get desk status"""
         print("Get status")
-        macAddress = self.address
-        child = pexpect.spawn(f'idasen-controller --mac-address {macAddress}', encoding='utf-8')
+        mac_address = self.address
+        child = pexpect.spawn(f'idasen-controller --mac-address {mac_address}', encoding='utf-8')
         index = child.expect(["was not found"])
         print(child.before)
         if index == 0:
@@ -36,12 +37,13 @@ class DeskController:
         else:
             output = child.read()
             child.close()
-            return "GEIL"
+            return output
         #child.expect(".*Found*")
         #output = child.read()
-        #return ""#self.scanOutputToDict(output)
+        #return ""#self._scan_output_to_dict(output)
 
-    def clean_output(self, input):
+    def _clean_output(self, input):
+        """Split the output and strip unwanted characters"""
         formatting = [
             "\xc2\xa0"
         ]
@@ -54,11 +56,13 @@ class DeskController:
             output.append(substring)
         return output
 
-
-    def scanOutputToDict(self, input):
+    def _scan_output_to_dict(self, input):
         dict = {}
-        outputStrings = self.clean_output(input)
-        for outputString in outputStrings[1:]:
-            splitedString = outputString.split(": ",1)
-            dict[splitedString[1]] = splitedString[0]
+        output_strings = self._clean_output(input)
+        for output_string in output_strings[1:]:
+            splited_string = output_string.split(": ", 1)
+            name = splited_string[1]
+            mac_address = splited_string[0]
+            if name.lower().find("desk") != -1:
+                dict[name] = mac_address
         return dict

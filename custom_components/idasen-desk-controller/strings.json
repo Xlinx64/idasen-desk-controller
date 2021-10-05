@@ -2,7 +2,8 @@
   "title": "Idasen Controller",
   "config": {
     "error": {
-      "invalid_device": "The selected device cannot be used!"
+      "invalid_device": "The selected device cannot be used!",
+      "no_devices_found": "No devices found!"
     },
     "step": {
       "user": {
