@@ -138,6 +138,9 @@ class DeskController:
             time.sleep(1)
         self.current_task_type = newTaskType
 
+    def kill_tasks(self):
+        self._kill_current_task(None)
+
     def _start_background_thread(self, task, args=[]):
         self.currentThread = threading.Thread(target=task, args=args)
         self.currentThread.start()
@@ -149,7 +152,6 @@ class DeskController:
 
     def remove_callback(self, callback) -> None:
         """Remove previously registered callback."""
-        self._backhroundTask.close()
         self._callbacks.discard(callback)
 
     def publish_updates(self) -> None:

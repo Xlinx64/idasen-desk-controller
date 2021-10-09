@@ -73,8 +73,12 @@ class IdasenControllerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return self._get_entry()
             await self.hass.async_add_executor_job(self._get_scanned_device_names)
 
+        default_value = None
+        if len(self._found_devices) > 0:
+            default_value = list(self._found_devices.keys())[0]
+
         data_schema = vol.Schema({
-                vol.Required("name"): vol.In(self._found_devices.keys())
+                vol.Required("name", default=default_value): vol.In(self._found_devices.keys())
         })
 
         return self.async_show_form(step_id="connection", data_schema=data_schema, errors=errors)
