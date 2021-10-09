@@ -1,33 +1,49 @@
-"""
-Idasen Desk Controller Integration
-"""
+"""The Detailed Hello World Push integration."""
+from __future__ import annotations
 
+import asyncio
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.typing import ConfigType
+
+from .desk_control import DeskController
 from .const import DOMAIN
 
-async def async_setup(hass, config):
-    """Set up the Idasen Desk Controller component."""
-    if DOMAIN in config:
-        hass.data[DOMAIN] = {}
+PLATFORMS: list[str] = ["cover", "sensor"]
 
-        for entry_config in config[DOMAIN]:
-            address = entry_config["address"]
 
-            hass.data[DOMAIN][address] = {
-                "name": entry_config.get("name")
-            }
-
-            hass.async_create_task(
-                hass.config_entries.flow.async_init(
-                    DOMAIN, context={"source": "import"}, data=entry_config
-                )
-            )
-
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up the component."""
+    hass.data.setdefault(DOMAIN, {})
     return True
 
-async def async_setup_entry(hass, entry):
-    """Set up the Idasen Desk Controller platform."""
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(entry, "sensor")
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up DeskController from a config entry."""
+    controller = DeskController(entry.data["name"], entry.data["address"])
+    controller.start_monitoring()
+    hass.data[DOMAIN][entry.entry_id] = controller
+
+    for component in PLATFORMS:
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(entry, component)
+        )
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    unload_ok = all(
+        await asyncio.gather(
+            *[
+                hass.config_entries.async_forward_entry_unload(
+                    entry, component)
+                for component in PLATFORMS
+            ]
+        )
     )
+    if unload_ok:
+        hass.data[DOMAIN].pop(entry.entry_id)
 
-    return True
+    return unload_ok

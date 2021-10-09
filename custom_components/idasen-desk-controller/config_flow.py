@@ -18,18 +18,19 @@ class IdasenControllerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._id = None
         self._controller = DeskController()
 
-    def _get_entry(self):  # TODO
+    def _get_entry(self):
         data = {
-            #"address": self.address,
+            "name": self._controller.name,
+            "address": self._controller.address
         }
         return self.async_create_entry(
-            title=self._title,
+            title=self._controller.name,
             data=data,
         )
 
     def _test_connection(self):
-        """Try to connect and get status"""
-        return self._controller.get_status()
+        """Try to connect and get height"""
+        return self._controller.check_Connection()
 
     def _scan_devices(self):
         """Scan for devices"""
@@ -62,12 +63,12 @@ class IdasenControllerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             print(self._controller.name)
             print(self._controller.address)
 
-            status = await self.hass.async_add_executor_job(self._test_connection)
-
-            if status is None:
+            height = await self.hass.async_add_executor_job(self._test_connection)
+            print(f"HEIGHT: {height}")
+            if height is None:
                 errors["base"] = "invalid_device"
             if not errors:
-                await self.async_set_unique_id(self.address)
+                await self.async_set_unique_id(self._controller.address)
                 self._abort_if_unique_id_configured()
                 return self._get_entry()
             await self.hass.async_add_executor_job(self._get_scanned_device_names)

@@ -1,102 +1,69 @@
-"""
-Platform for Idasen Desk Controller Integration
-"""
-
-import random
+"""Platform for sensor integration."""
 
 from homeassistant.helpers.entity import Entity
-from homeassistant.const import (
-    STATE_OFF,
-    STATE_ON,
-)
+from .const import DOMAIN
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import (
-    DOMAIN,
-    LOGGER,
-    HEIGHT_CHAR_ID
-)
-from .btctl import BTctl
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up the Linak DPG Desk from a config entry."""
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback
+) -> None:
+    """Add sensors for passed config_entry in HA."""
+    controller = hass.data[DOMAIN][config_entry.entry_id]
+    async_add_entities([HeightSensor(controller)])
 
-    async_add_entities([DeskSensor(config_entry)])
 
-class DeskSensor(Entity):
-    """Representation of Height Sensor for Linak Desk."""
+class SensorBase(Entity):
+    """Base representation of a Sensor."""
 
-    def __init__(self, config_entry):
-        """Initialize the Linak DPG desk."""
-        self._config_entry = config_entry
-        self._name = config_entry.data.get("name")
-        self._uuid = config_entry.data.get("id")
-        self._address = config_entry.data.get("address")
-        self._state = STATE_OFF
-        self._height = None
-        self._offset = 70
-        self._unit_of_measurement = "cm"
+    should_poll = False
 
-    def update(self):
-        """Update state of the device."""
-        try:
-            wrapper = BTctl()
-            wrapper.connect(self._address)
-
-            if wrapper.gatt():
-                output = wrapper.attribute_read_value(HEIGHT_CHAR_ID)
-
-        except:
-            self._state = STATE_OFF
-
-        else:
-            if output:
-                hex_arr = []
-
-                for value in output[-1].split(" "):
-                    if value.strip():
-                        if not value.endswith("..."):
-                            hex_arr.append(value)
-
-                better_arr = " ".join(hex_arr).encode()
-
-                val = BTctl().convertHexStr(better_arr[0:5])
-
-                if val:
-                    self._state = float(val) / 100
-                    self._height = self._state + self._offset
+    def __init__(self, controller):
+        """Initialize the sensor."""
+        self._controller = controller
 
     @property
-    def unique_id(self) -> str:
-        """Return the unique ID of the device."""
-        return self._uuid
+    def device_info(self):
+        """Return information to link this entity with the correct device."""
+        return {"identifiers": {(DOMAIN, self._controller.address)}}
+
+    @property
+    def available(self) -> bool:
+        """Desk is available"""
+        return self._controller.current_task_type is not None
+
+    async def async_added_to_hass(self):
+        """Run when this Entity has been added to HA."""
+        self._controller.register_callback(self.async_write_ha_state)
+
+    async def async_will_remove_from_hass(self):
+        """Entity being removed from hass."""
+        self._controller.remove_callback(self.async_write_ha_state)
+
+
+class HeightSensor(SensorBase):
+    """Representation of a Sensor."""
+
+    @property
+    def unique_id(self):
+        """Return Unique ID string."""
+        return f"{self._controller.address}_illuminance"
 
     @property
     def name(self):
-        """Return the name of the device."""
-        return self._name
+        """Return the name of the sensor."""
+        return f"{self._controller.name} Height"
 
     @property
     def state(self):
-        """Return the state of the device."""
-        return self._state
+        """Return the state of the sensor."""
+        return self._controller.height
 
     @property
-    def offset(self):
-        """Return the offset of the device."""
-        return self._offset
-
-    @property
-    def address(self):
-        """Return the address of the device."""
-        return self._address
-
-    @property
-    def device_state_attributes(self):
-        """Return the state attributes of the device."""
-        attr = {}
-        attr["height"] = self._height
-        attr["offset"] = self._offset
-        attr["unit_of_measurement"] = self._unit_of_measurement
-        attr["mac_address"] = self._address
-
-        return attr
+    def unit_of_measurement(self):
+        """Return the unit of measurement."""
+        return "mm"
