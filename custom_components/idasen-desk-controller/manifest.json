@@ -4,7 +4,23 @@
   "documentation": "https://github.com/Xlinx64/idasen-desk-controller",
   "dependencies": [],
   "codeowners": ["@Xilinx64"],
-  "requirements": ["pexpect==4.8.0", "idasen-controller==1.0.6"],
+  "requirements": [
+    "pexpect==4.8.0",
+    "appdirs==1.4.4",
+    "attrs==20.3.0",
+    "Automat==20.2.0",
+    "bleak==0.11.0",
+    "constantly==15.1.0",
+    "hyperlink==21.0.0",
+    "idna==3.1",
+    "incremental==17.5.0",
+    "PyHamcrest==2.0.2",
+    "PyYAML==5.4.1",
+    "six==1.15.0",
+    "Twisted==21.7.0",
+    "txdbus==1.1.2",
+    "zope.interface==5.2.0"
+  ],
   "config_flow": true,
   "version": "1.0.0"
 }

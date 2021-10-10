@@ -41,7 +41,7 @@ class DeskController:
     def scan_devices(self):
         """Scan devices"""
         print("Start scanning")
-        child = pexpect.spawn('idasen-controller --scan', encoding='utf-8')
+        child = pexpect.spawn('python3 /config/custom_components/idasen-desk-controller/main.py --scan', encoding='utf-8')
         child.expect(".*Found*")
         output = child.read()
         child.close()
@@ -50,7 +50,7 @@ class DeskController:
     def check_Connection(self):
         """Get desk status"""
         print("Get status")
-        child = pexpect.spawn(f'idasen-controller --mac-address {self.address}', encoding='utf-8')
+        child = pexpect.spawn(self._build_command_string({}), encoding='utf-8')
         index = child.expect(["Height: ", "was not found"])
         ret = False
         if index == 0:
@@ -119,7 +119,7 @@ class DeskController:
             self.start_monitoring()
 
     def _build_command_string(self, dict):
-        cmdString = "idasen-controller "
+        cmdString = "python3 /config/custom_components/idasen-desk-controller/main.py "
         cmdString += f"--mac-address {self.address} "
         cmdString += "--scan-timeout 2 "
         for key in dict:
