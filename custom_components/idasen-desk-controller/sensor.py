@@ -64,6 +64,11 @@ class HeightSensor(SensorBase):
         return self._controller.height
 
     @property
+    def icon(self) -> str:
+        """Return the icon of the cover."""
+        return "mdi:arrow-expand-vertical"
+
+    @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
         return "mm"
