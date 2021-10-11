@@ -14,7 +14,7 @@ async def async_setup_entry(
 ) -> None:
     """Add sensors for passed config_entry in HA."""
     controller = hass.data[DOMAIN][config_entry.entry_id]
-    async_add_entities([HeightSensor(controller)])
+    async_add_entities([SpeedSensor(controller), HeightSensor(controller)])
 
 
 class SensorBase(Entity):
@@ -34,7 +34,7 @@ class SensorBase(Entity):
     @property
     def available(self) -> bool:
         """Desk is available"""
-        return self._controller.current_task_type is not None
+        return self._controller.is_available
 
     async def async_added_to_hass(self):
         """Run when this Entity has been added to HA."""
@@ -51,7 +51,7 @@ class HeightSensor(SensorBase):
     @property
     def unique_id(self):
         """Return Unique ID string."""
-        return f"{self._controller.address}_illuminance"
+        return f"{self._controller.address}_height"
 
     @property
     def name(self):
@@ -72,3 +72,32 @@ class HeightSensor(SensorBase):
     def unit_of_measurement(self):
         """Return the unit of measurement."""
         return "mm"
+
+
+class SpeedSensor(SensorBase):
+    """Representation of a Sensor."""
+
+    @property
+    def unique_id(self):
+        """Return Unique ID string."""
+        return f"{self._controller.address}_speed"
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return f"{self._controller.name} Speed"
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        return self._controller.speed
+
+    @property
+    def icon(self) -> str:
+        """Return the icon of the cover."""
+        return "mdi:speedometer"
+
+    @property
+    def unit_of_measurement(self):
+        """Return the unit of measurement."""
+        return "mm/s"

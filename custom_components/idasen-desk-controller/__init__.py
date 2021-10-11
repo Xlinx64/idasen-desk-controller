@@ -22,7 +22,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up DeskController from a config entry."""
     controller = DeskController(entry.data["name"], entry.data["address"])
-    controller.start_monitoring()
+    await controller.start_monitoring()
     hass.data[DOMAIN][entry.entry_id] = controller
 
     for component in PLATFORMS:
