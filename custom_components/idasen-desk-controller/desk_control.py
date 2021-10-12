@@ -43,6 +43,11 @@ class DeskController:
         """Return if the desk is connected"""
         return self._ble_controller.client.is_connected
 
+    def set_device(self, name, mac_address):
+        self.name = name
+        self.address = mac_address
+        self._ble_controller.mac_address = mac_address
+
     def height_speed_callback(self, height, speed):
         print(f"Height: {height}mm Speed: {speed}mm/s")
         self.speed = speed

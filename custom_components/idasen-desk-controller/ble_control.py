@@ -116,7 +116,7 @@ class BLEController:
             desk = await self.scan()
         if not desk:
             print('Could not find desk {}'.format(self.mac_address))
-            os._exit(1)
+            return None
         # Cache the Bleak device config to connect more quickly in future
         self.pickle_desk(desk)
         try:
@@ -144,7 +144,7 @@ class BLEController:
             else:
                 print('Connecting failed')
                 print(e)
-                os._exit(1)
+                return None
 
     def _connection_change(self, client):
         if self.connection_change_callback is not None:
