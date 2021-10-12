@@ -1,4 +1,4 @@
-"""The Detailed Hello World Push integration."""
+"""Idasen Desk Controller integration."""
 from __future__ import annotations
 
 import asyncio
@@ -10,7 +10,7 @@ from homeassistant.helpers.typing import ConfigType
 from .desk_control import DeskController
 from .const import DOMAIN
 
-PLATFORMS: list[str] = ["cover", "sensor"]
+PLATFORMS: list[str] = ["cover", "sensor", "switch"]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -22,7 +22,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up DeskController from a config entry."""
     controller = DeskController(entry.data["name"], entry.data["address"])
-    controller.start_monitoring()
+    await controller.start_monitoring()
     hass.data[DOMAIN][entry.entry_id] = controller
 
     for component in PLATFORMS:
@@ -45,7 +45,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     if unload_ok:
         controller = hass.data[DOMAIN][entry.entry_id]
-        controller.kill_tasks()
+        await controller.disconnect()
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok

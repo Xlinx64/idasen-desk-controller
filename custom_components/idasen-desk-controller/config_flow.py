@@ -4,8 +4,7 @@ Config Flow for Idasen Desk Controller Integration
 
 import voluptuous as vol
 from homeassistant import config_entries
-import homeassistant.helpers.config_validation as cv
-from .const import LOGGER, DOMAIN
+from .const import DOMAIN
 from .desk_control import DeskController
 
 
@@ -28,24 +27,17 @@ class IdasenControllerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data=data,
         )
 
-    def _test_connection(self):
-        """Try to connect and get height"""
-        return self._controller.check_Connection()
-
-    def _scan_devices(self):
-        """Scan for devices"""
-        self._found_devices = self._controller.scan_devices()
-        return self._found_devices
-
-    def _get_scanned_device_names(self):
-        return self._scan_devices().keys()
+    async def _get_scanned_device_names(self):
+        self._found_devices = await self._controller.scan_devices()
+        return self._found_devices.keys()
 
     async def async_step_user(self, user_input=None):
         """Invoked when a user initiates a flow via the user interface."""
         errors = {}
 
         if user_input is not None:
-            device_names = await self.hass.async_add_executor_job(self._get_scanned_device_names)
+            device_names = await self._get_scanned_device_names()
+            print(device_names)
             if len(device_names) > 0:
                 return await self.async_step_connection()
             errors["base"] = "no_devices_found"
@@ -60,18 +52,20 @@ class IdasenControllerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._controller.name = user_input.get("name")
             self._controller.address = self._found_devices[self._controller.name]
+            self._controller.set_device(user_input.get("name"), self._found_devices[self._controller.name])
             print(self._controller.name)
             print(self._controller.address)
 
-            height = await self.hass.async_add_executor_job(self._test_connection)
+            height, speed = await self._controller.get_device_state()
             print(f"HEIGHT: {height}")
             if height is None:
                 errors["base"] = "invalid_device"
             if not errors:
+                await self._controller.disconnect()
                 await self.async_set_unique_id(self._controller.address)
                 self._abort_if_unique_id_configured()
                 return self._get_entry()
-            await self.hass.async_add_executor_job(self._get_scanned_device_names)
+            await self._get_scanned_device_names()
 
         default_value = None
         if len(self._found_devices) > 0:
