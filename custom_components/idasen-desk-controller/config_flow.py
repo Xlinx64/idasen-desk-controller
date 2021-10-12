@@ -4,8 +4,7 @@ Config Flow for Idasen Desk Controller Integration
 
 import voluptuous as vol
 from homeassistant import config_entries
-import homeassistant.helpers.config_validation as cv
-from .const import LOGGER, DOMAIN
+from .const import DOMAIN
 from .desk_control import DeskController
 
 

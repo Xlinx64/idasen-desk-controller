@@ -1,4 +1,4 @@
-"""Platform for sensor integration."""
+"""Platform for sensor entity."""
 
 from homeassistant.helpers.entity import Entity
 from .const import DOMAIN
@@ -34,7 +34,7 @@ class SensorBase(Entity):
     @property
     def available(self) -> bool:
         """Desk is available"""
-        return self._controller.is_available
+        return self._controller.is_connected
 
     async def async_added_to_hass(self):
         """Run when this Entity has been added to HA."""

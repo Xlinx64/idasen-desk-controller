@@ -1,7 +1,3 @@
-import time
-import pexpect
-import threading
-
 from .ble_control import BLEController
 
 MIN_HEIGHT = 620
@@ -23,9 +19,9 @@ class DeskController:
         self.height = 0
         self.speed = 0
         self._callbacks = set()
-        self._current_task = None
-        self.current_task_type = None
-        self._ble_controller = BLEController(height_speed_callback=self.height_speed_callback)
+        self._ble_controller = BLEController(mac_address=address,
+                                             height_speed_callback=self.height_speed_callback,
+                                             connection_change_callback=self.publish_updates)
 
     @property
     def height_percentage(self):
@@ -43,8 +39,8 @@ class DeskController:
         return MIN_HEIGHT-self.height-TOLERANCE < 0
 
     @property
-    def is_available(self):
-        """Return if the desk is on its lowest position"""
+    def is_connected(self):
+        """Return if the desk is connected"""
         return self._ble_controller.client.is_connected
 
     def height_speed_callback(self, height, speed):
@@ -87,6 +83,9 @@ class DeskController:
     async def stop_movement(self):
         print("STOP MOVEMENT")
         await self._ble_controller.stop_movement()
+
+    async def disconnect(self):
+        await self._ble_controller.disconnect()
 
     #HOME ASSISTNAT Callbacks
     def register_callback(self, callback) -> None:

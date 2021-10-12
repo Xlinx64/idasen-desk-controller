@@ -1,4 +1,4 @@
-"""Platform for cover integration."""
+"""Platform for cover entity."""
 
 from typing import Any
 
@@ -65,7 +65,7 @@ class DeskCover(CoverEntity):
     @property
     def available(self) -> bool:
         """Return True if desk is available."""
-        return self._controller.is_available
+        return self._controller.is_connected
 
     @property
     def icon(self) -> str:
@@ -82,16 +82,15 @@ class DeskCover(CoverEntity):
         """Return if the cover is closed, same as position 0."""
         return self._controller.is_on_lowest
 
-    #TODO
-    #@property
-    #def is_closing(self) -> bool:
-    #    """Return if the cover is closing or not."""
-    #    return self._roller.moving < 0
+    @property
+    def is_closing(self) -> bool:
+        """Return if the cover is closing or not."""
+        return self._controller.speed < 0
 
-    #@property
-    #def is_opening(self) -> bool:
-    #    """Return if the cover is opening or not."""
-    #    return self._roller.moving > 0
+    @property
+    def is_opening(self) -> bool:
+        """Return if the cover is opening or not."""
+        return self._controller.speed > 0
 
     async def async_stop_cover(self, **kwargs):
         """Stop the cover."""
