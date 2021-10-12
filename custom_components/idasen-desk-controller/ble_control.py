@@ -26,6 +26,7 @@ COMMAND_REFERENCE_INPUT_DOWN = bytearray(struct.pack("<H", 32767))
 
 # OTHER DEFINITIONS
 DEFAULT_CONFIG_DIR = user_config_dir('idasen-desk-controller')
+os.makedirs(DEFAULT_CONFIG_DIR, exist_ok=True)
 PICKLE_FILE = os.path.join(DEFAULT_CONFIG_DIR, 'desk.pickle')
 
 # CONFIGURATION SETUP
@@ -125,8 +126,11 @@ class BLEController:
                 self.client = BleakClient(desk, device=ADAPTER_NAME)
                 if not IS_MAC:
                     print("TRY PAIRING")
-                    ret = await self.client.pair()
-                    print(f"RET: {ret}")
+                    try:
+                        ret = await self.client.pair()
+                        print(f"RET: {ret}")
+                    except Exception:
+                        pass
             await self.client.connect(timeout=CONNECTION_TIMEOUT)
             self._connection_change(self.client)
             self.client.set_disconnected_callback(self._connection_change)
