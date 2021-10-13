@@ -6,7 +6,7 @@ import sys
 import struct
 import asyncio
 from bleak import BleakClient, BleakError, BleakScanner
-from .const import HEIGHT_TOLERANCE, MIN_HEIGHT, ADAPTER_NAME, SCAN_TIMEOUT, CONNECTION_TIMEOUT  # , MOVEMENT_TIMEOUT
+from .const import HEIGHT_TOLERANCE, MIN_HEIGHT, ADAPTER_NAME, SCAN_TIMEOUT, CONNECTION_TIMEOUT, LOGGER
 
 IS_LINUX = sys.platform == "linux" or sys.platform == "linux2"
 IS_WINDOWS = sys.platform == "win32"
@@ -54,6 +54,9 @@ class BLEController:
 
     async def get_current_state(self):
         self.client = await self.connect()
+        if self.client is None:
+            print(f'Could not get Client {self.mac_address}')
+            LOGGER.error(f'Could not connect to {self.mac_address}')
         height_raw, speed_raw = await self._read_state()
         height, speed = self._format_height_speed(height_raw, speed_raw)
         print("Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(height, speed))
@@ -97,8 +100,9 @@ class BLEController:
             return self.client
 
         desk = await self.scan()
-        if not desk:
-            print('Could not find desk {}'.format(self.mac_address))
+        if desk is None:
+            print(f'Could not find desk {self.mac_address}')
+            LOGGER.error(f'Could not find desk {self.mac_address}')
             return None
 
         try:
@@ -106,20 +110,20 @@ class BLEController:
             if not self.client:
                 self.client = BleakClient(desk, device=ADAPTER_NAME)
                 if not IS_MAC:
-                    print("TRY PAIRING")
+                    print("Try pairing")
                     try:
-                        ret = await self.client.pair()
-                        print(f"Pairing: {ret}")
+                        success = await self.client.pair()
+                        print(f"Pairing-Success: {success}")
                     except Exception:
                         pass
             await self.client.connect(timeout=CONNECTION_TIMEOUT)
             self._connection_change(self.client)
             self.client.set_disconnected_callback(self._connection_change)
-            print("Connected {}".format(self.mac_address))
+            print(f"Connected {self.mac_address}")
             return self.client
         except BleakError as e:
-            print('Connecting failed')
-            print(e)
+            print(f'Bluetooth Error {e}')
+            LOGGER.error(f'Bluetooth Error {e}')
             return None
 
     def _connection_change(self, client):
@@ -128,6 +132,10 @@ class BLEController:
 
     async def move_to_position(self, position):
         self.client = await self.connect()
+        if self.client is None:
+            print(f'Could not get Client {self.mac_address}')
+            LOGGER.error(f'Could not connect to {self.mac_address}')
+            return
         self._target_height = self._mm_to_raw(position)
         await self._move_to()
         if self._target_height:
@@ -140,6 +148,7 @@ class BLEController:
 
     async def _move_to(self):
         """Move the desk to a specified height"""
+        await self.stop_movement()
         initial_height, speed = await self._read_state()
         self._direction = "UP" if self._target_height > initial_height else "DOWN"
         self._movement_count = 0
