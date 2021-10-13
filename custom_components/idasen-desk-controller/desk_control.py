@@ -7,9 +7,10 @@ TOLERANCE = 10
 TASKTYPE_MONITORING = "MONITORING"
 TASKTYPE_MOVE = "MOVE"
 
+DESK_NAME = "desk"
+
 
 class DeskController:
-    """A wrapper for idasen-controller """
 
     def __init__(self, name=None, address=None):
         """Initalize DeskController"""
@@ -60,7 +61,7 @@ class DeskController:
         filtered_devices = {}
         devices = await self._ble_controller.scan()
         for name in devices:
-            if string_contains(name, "desk"):
+            if string_contains(name, DESK_NAME):
                 filtered_devices[name] = devices[name]
         return filtered_devices
 
@@ -78,10 +79,10 @@ class DeskController:
     async def move_to_position(self, percentage):
         height = int(percentage*((MAX_HEIGHT-MIN_HEIGHT)/100) + MIN_HEIGHT)
         print(height)
-        if height < 620:
-            height = 620
-        elif height > 1270:
-            height = 1270
+        if height < MIN_HEIGHT:
+            height = MIN_HEIGHT
+        elif height > MAX_HEIGHT:
+            height = MAX_HEIGHT
         await self._ble_controller.move_to_position(height)
 
     async def stop_movement(self):
@@ -107,6 +108,6 @@ class DeskController:
 
 
 def string_contains(str1, str2):
-    if str1 is None:
+    if str1 is None or str2 is None:
         return False
     return str1.lower().find(str2.lower()) != -1

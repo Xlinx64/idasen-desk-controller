@@ -57,7 +57,7 @@ class IdasenControllerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             print(self._controller.address)
 
             height, speed = await self._controller.get_device_state()
-            print(f"HEIGHT: {height}")
+            #print(f"HEIGHT: {height}")
             if height is None:
                 errors["base"] = "invalid_device"
             if not errors:
@@ -68,7 +68,7 @@ class IdasenControllerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             await self._get_scanned_device_names()
 
         default_value = None
-        if len(self._found_devices) > 0:
+        if self._found_devices:
             default_value = list(self._found_devices.keys())[0]
 
         data_schema = vol.Schema({

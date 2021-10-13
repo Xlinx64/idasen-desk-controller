@@ -29,8 +29,6 @@ DEFAULT_CONFIG_DIR = user_config_dir('idasen-desk-controller')
 os.makedirs(DEFAULT_CONFIG_DIR, exist_ok=True)
 PICKLE_FILE = os.path.join(DEFAULT_CONFIG_DIR, 'desk.pickle')
 
-# CONFIGURATION SETUP
-
 # Height of the desk at it's lowest (in mm)
 # I assume this is the same for all Idasen desks
 BASE_HEIGHT = 620
@@ -131,7 +129,7 @@ class BLEController:
                     print("TRY PAIRING")
                     try:
                         ret = await self.client.pair()
-                        print(f"RET: {ret}")
+                        print(f"Pairing: {ret}")
                     except Exception:
                         pass
             await self.client.connect(timeout=CONNECTION_TIMEOUT)
@@ -166,27 +164,18 @@ class BLEController:
             await asyncio.sleep(1)
             height_raw, speed_raw = await self._read_state()
             height, speed = self._format_height_speed(height_raw, speed_raw)
-            #print("Final height: {:4.0f}mm (Target: {:4.0f}mm)".format(height, self._raw_to_mm(target)))
             if self.height_speed_callback is not None:
                 self.height_speed_callback(height, speed)
 
     async def _move_to(self):
         """Move the desk to a specified height"""
-
         initial_height, speed = await self._read_state()
-
-        # Initialise by setting the movement direction
         self._direction = "UP" if self._target_height > initial_height else "DOWN"
-
-        # Set up callback to run when the desk height changes. It will resend
-        # movement commands until the desk has reached the target height.
+        self._movement_count = 0
 
         # loop = asyncio.get_event_loop()
         # self._move_done = loop.create_future()
-        self._movement_count = 0
 
-        # Listen for changes to desk height and send first move command (if we are
-        # not already at the target height).
         if not self._has_reached_target(initial_height):
             self._is_moving = True
             await self._subscribe(UUID_HEIGHT, self._height_data_callback)
@@ -204,7 +193,6 @@ class BLEController:
     def _height_data_callback(self, sender, data):
         height_raw, speed_raw = struct.unpack("<Hh", data)
         height, speed = self._format_height_speed(height_raw, speed_raw)
-        #print("Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(height, speed))
 
         if self._is_moving:
             self._movement_count = self._movement_count + 1
@@ -244,13 +232,11 @@ class BLEController:
             self.height_speed_callback(height, speed)
 
     async def stop_movement(self):
-        # This emulates the behaviour of the app. Stop commands are sent to both
-        # Reference Input and Command characteristics.
         self._is_moving = False
         self._direction = None
         await self.client.write_gatt_char(UUID_COMMAND, COMMAND_STOP)
         if IS_LINUX:
-            # It doesn't like this on windows
+            # Doesnt work on windows
             await self.client.write_gatt_char(UUID_REFERENCE_INPUT, COMMAND_REFERENCE_INPUT_STOP)
 
     async def _read_state(self):
@@ -278,7 +264,7 @@ class BLEController:
         try:
             await self.client.stop_notify(uuid)
         except KeyError:
-            # This happens on windows, I don't know why
+            # This happens on windows
             pass
 
     def _mm_to_raw(self, mm):
