@@ -1,8 +1,9 @@
-from .ble_control import BLEController
+"""
+DeskController handles Home Assistant communication
+"""
 
-MIN_HEIGHT = 620
-MAX_HEIGHT = 1270
-TOLERANCE = 10
+from .ble_control import BLEController
+from .const import HEIGHT_TOLERANCE, MIN_HEIGHT, MAX_HEIGHT
 
 TASKTYPE_MONITORING = "MONITORING"
 TASKTYPE_MOVE = "MOVE"
@@ -26,23 +27,23 @@ class DeskController:
 
     @property
     def height_percentage(self):
-        """Return if the cover is closed, same as position 0."""
+        """Return the height of the desk in percentage, it is used for the cover"""
         return int(self.height-MIN_HEIGHT)/((MAX_HEIGHT-MIN_HEIGHT)/100)
 
     @property
     def is_on_highest(self):
         """Return if the desk is on its highest position"""
-        return MAX_HEIGHT-self.height-TOLERANCE < 0
+        return MAX_HEIGHT-self.height-HEIGHT_TOLERANCE < 0
 
     @property
     def is_on_lowest(self):
         """Return if the desk is on its lowest position"""
-        return MIN_HEIGHT-self.height-TOLERANCE < 0
+        return MIN_HEIGHT-self.height-HEIGHT_TOLERANCE < 0
 
     @property
     def is_connected(self):
         """Return if the desk is connected"""
-        return self._ble_controller.client.is_connected
+        return self._ble_controller.is_connected
 
     def set_device(self, name, mac_address):
         self.name = name
@@ -50,6 +51,7 @@ class DeskController:
         self._ble_controller.mac_address = mac_address
 
     def height_speed_callback(self, height, speed):
+        """Callback for the BLEController"""
         print(f"Height: {height}mm Speed: {speed}mm/s")
         self.speed = speed
         self.height = height
@@ -66,7 +68,7 @@ class DeskController:
         return filtered_devices
 
     async def get_device_state(self):
-        """Get desk status"""
+        """Get desk state"""
         print("Get status")
         height, speed = await self._ble_controller.get_current_state()
         self.height = height
@@ -74,9 +76,11 @@ class DeskController:
         return height, speed
 
     async def start_monitoring(self):
+        """Start monitoring the state characteristic and get initial values"""
         await self._ble_controller.start_monitoring()
 
     async def move_to_position(self, percentage):
+        """Move to percentage"""
         height = int(percentage*((MAX_HEIGHT-MIN_HEIGHT)/100) + MIN_HEIGHT)
         print(height)
         if height < MIN_HEIGHT:
@@ -86,15 +90,16 @@ class DeskController:
         await self._ble_controller.move_to_position(height)
 
     async def stop_movement(self):
-        print("STOP MOVEMENT")
+        """Stop movement"""
         await self._ble_controller.stop_movement()
 
     async def disconnect(self):
+        """Disconnect the ble client"""
         await self._ble_controller.disconnect()
 
     #HOME ASSISTNAT Callbacks
     def register_callback(self, callback) -> None:
-        """Register callback, called when Roller changes state."""
+        """Register callback, called when the desk changes state."""
         self._callbacks.add(callback)
 
     def remove_callback(self, callback) -> None:
@@ -102,7 +107,7 @@ class DeskController:
         self._callbacks.discard(callback)
 
     def publish_updates(self) -> None:
-        """Schedule call all registered callbacks."""
+        """Call all registered callbacks."""
         for callback in self._callbacks:
             callback()
 

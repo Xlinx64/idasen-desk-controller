@@ -1,11 +1,12 @@
-#!python3
-import os
+"""
+BLEController handles BLE communication
+"""
+
 import sys
 import struct
 import asyncio
 from bleak import BleakClient, BleakError, BleakScanner
-import pickle
-from appdirs import user_config_dir
+from .const import HEIGHT_TOLERANCE, MIN_HEIGHT, ADAPTER_NAME, SCAN_TIMEOUT, CONNECTION_TIMEOUT  # , MOVEMENT_TIMEOUT
 
 IS_LINUX = sys.platform == "linux" or sys.platform == "linux2"
 IS_WINDOWS = sys.platform == "win32"
@@ -23,21 +24,6 @@ COMMAND_STOP = bytearray(struct.pack("<H", 255))
 COMMAND_REFERENCE_INPUT_STOP = bytearray(struct.pack("<H", 32769))
 COMMAND_REFERENCE_INPUT_UP = bytearray(struct.pack("<H", 32768))
 COMMAND_REFERENCE_INPUT_DOWN = bytearray(struct.pack("<H", 32767))
-
-# OTHER DEFINITIONS
-DEFAULT_CONFIG_DIR = user_config_dir('idasen-desk-controller')
-os.makedirs(DEFAULT_CONFIG_DIR, exist_ok=True)
-PICKLE_FILE = os.path.join(DEFAULT_CONFIG_DIR, 'desk.pickle')
-
-# Height of the desk at it's lowest (in mm)
-# I assume this is the same for all Idasen desks
-BASE_HEIGHT = 620
-MAX_HEIGHT = 1270  # 6500
-HEIGHT_TOLERANCE = 2.0
-ADAPTER_NAME = 'hci0'
-SCAN_TIMEOUT = 5
-CONNECTION_TIMEOUT = 20
-MOVEMENT_TIMEOUT = 30
 
 
 class BLEController:
@@ -104,23 +90,17 @@ class BLEController:
                 await self.client.disconnect()
             print('Disconnected')
 
-    async def connect(self, attempt=0):
+    async def connect(self):
         """Attempt to connect to the desk"""
         # return client when the client is already connected
         if self.client is not None and self.client.is_connected:
             return self.client
-        # Attempt to load and connect to the pickled desk
-        desk = self.unpickle_desk()
-        if desk:
-            pickled = True
-        if not desk:
-            # If that fails then rescan for the desk
-            desk = await self.scan()
+
+        desk = await self.scan()
         if not desk:
             print('Could not find desk {}'.format(self.mac_address))
             return None
-        # Cache the Bleak device config to connect more quickly in future
-        self.pickle_desk(desk)
+
         try:
             print('Connecting')
             if not self.client:
@@ -138,18 +118,9 @@ class BLEController:
             print("Connected {}".format(self.mac_address))
             return self.client
         except BleakError as e:
-            if attempt == 0 and pickled:
-                # Could be a bad pickle so remove it and try again
-                try:
-                    os.remove(PICKLE_FILE)
-                    print('Connecting failed - Retrying without cached connection')
-                except OSError:
-                    pass
-                return await self.connect(attempt=attempt + 1)
-            else:
-                print('Connecting failed')
-                print(e)
-                return None
+            print('Connecting failed')
+            print(e)
+            return None
 
     def _connection_change(self, client):
         if self.connection_change_callback is not None:
@@ -268,31 +239,13 @@ class BLEController:
             pass
 
     def _mm_to_raw(self, mm):
-        return (mm - BASE_HEIGHT) * 10
+        return (mm - MIN_HEIGHT) * 10
 
     def _raw_to_mm(self, raw):
-        return (raw / 10) + BASE_HEIGHT
+        return (raw / 10) + MIN_HEIGHT
 
     def _raw_to_speed(self, raw):
         return (raw / 100)
 
     def _format_height_speed(self, height, speed):
         return int(self._raw_to_mm(height)), int(self._raw_to_speed(speed))
-
-    def unpickle_desk(self):
-        """Load a Bleak device config from a pickle file and check that it is the correct device"""
-        try:
-            if IS_LINUX:
-                with open(PICKLE_FILE, 'rb') as f:
-                    desk = pickle.load(f)
-                    if desk.address == self.mac_address:
-                        return desk
-        except Exception:
-            pass
-        return None
-
-    def pickle_desk(self, desk):
-        """Attempt to pickle the desk"""
-        if IS_LINUX:
-            with open(PICKLE_FILE, 'wb') as f:
-                pickle.dump(desk, f)
