@@ -12,11 +12,10 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN
 
 
-async def async_setup_entry(
-    hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback
-) -> None:
+async def async_setup_entry(hass: HomeAssistant,
+                            config_entry: ConfigEntry,
+                            async_add_entities: AddEntitiesCallback
+                            ) -> None:
     """Add cover for passed config_entry in HA."""
     controller = hass.data[DOMAIN][config_entry.entry_id]
     async_add_entities([DeskCover(controller)])

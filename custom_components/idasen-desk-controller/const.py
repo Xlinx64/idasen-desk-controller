@@ -6,4 +6,4 @@ import logging
 
 LOGGER = logging.getLogger(__package__)
 DOMAIN = 'idasen-desk-controller'
-PLATFORMS = ['sensor']
+PLATFORMS = ["cover", "sensor", "switch"]

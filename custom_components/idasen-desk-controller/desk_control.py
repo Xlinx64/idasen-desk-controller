@@ -62,7 +62,6 @@ class DeskController:
         for name in devices:
             if string_contains(name, "desk"):
                 filtered_devices[name] = devices[name]
-        #print(filtered_devices)
         return filtered_devices
 
     async def get_device_state(self):

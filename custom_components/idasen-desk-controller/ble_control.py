@@ -43,7 +43,9 @@ MOVEMENT_TIMEOUT = 30
 
 
 class BLEController:
-    def __init__(self, mac_address=None, height_speed_callback=None, connection_change_callback=None):
+    def __init__(self, mac_address=None,
+                 height_speed_callback=None,
+                 connection_change_callback=None):
         """Set up the async event loop and signal handlers"""
         print("Init BLEController")
         self.client = None
@@ -76,7 +78,8 @@ class BLEController:
         return height, speed
 
     async def scan(self):
-        """Scan for a bluetooth device with the configured address and return it or return all devices if no address specified"""
+        """Scan for a bluetooth device with the configured address
+        return it or return all devices if no address specified"""
         print('Scanning')
         scanner = BleakScanner()
         devices = await scanner.discover(device=ADAPTER_NAME, timeout=SCAN_TIMEOUT)

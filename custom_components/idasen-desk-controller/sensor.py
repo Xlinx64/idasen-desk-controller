@@ -7,11 +7,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 
-async def async_setup_entry(
-    hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback
-) -> None:
+async def async_setup_entry(hass: HomeAssistant,
+                            config_entry: ConfigEntry,
+                            async_add_entities: AddEntitiesCallback
+                            ) -> None:
     """Add sensors for passed config_entry in HA."""
     controller = hass.data[DOMAIN][config_entry.entry_id]
     async_add_entities([SpeedSensor(controller), HeightSensor(controller)])

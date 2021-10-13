@@ -8,9 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 
 from .desk_control import DeskController
-from .const import DOMAIN
-
-PLATFORMS: list[str] = ["cover", "sensor", "switch"]
+from .const import DOMAIN, PLATFORMS
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
