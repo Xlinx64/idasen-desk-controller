@@ -49,14 +49,20 @@ class BLEController:
         return self.client is not None and self.client.is_connected
 
     async def start_monitoring(self):
+        print("START MONITORING")
         await self.get_current_state()
+        if self.client is None:
+            print(f'Cannot start monitoring for address: {self.mac_address}')
+            return
         await self._subscribe(UUID_HEIGHT, self._height_data_callback)
 
     async def get_current_state(self):
+        print("GET CURRENT STATE")
         self.client = await self.connect()
         if self.client is None:
             print(f'Could not get Client {self.mac_address}')
             LOGGER.error(f'Could not connect to {self.mac_address}')
+            return None, None
         height_raw, speed_raw = await self._read_state()
         height, speed = self._format_height_speed(height_raw, speed_raw)
         print("Height: {:4.0f}mm Speed: {:2.0f}mm/s".format(height, speed))
@@ -109,13 +115,12 @@ class BLEController:
             print('Connecting')
             if not self.client:
                 self.client = BleakClient(desk, device=ADAPTER_NAME)
-                if not IS_MAC:
-                    print("Try pairing")
-                    try:
-                        success = await self.client.pair()
-                        print(f"Pairing-Success: {success}")
-                    except Exception:
-                        pass
+                # if not IS_MAC:
+                #     print("Try pairing")
+                #
+                #         success = await self.client.pair()
+                #         print(f"Pairing-Success: {success}")
+                #
             await self.client.connect(timeout=CONNECTION_TIMEOUT)
             self._connection_change(self.client)
             self.client.set_disconnected_callback(self._connection_change)
@@ -148,6 +153,7 @@ class BLEController:
 
     async def _move_to(self):
         """Move the desk to a specified height"""
+        self.client = await self.connect()
         await self.stop_movement()
         initial_height, speed = await self._read_state()
         self._direction = "UP" if self._target_height > initial_height else "DOWN"

@@ -59,6 +59,7 @@ class IdasenControllerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             height, speed = await self._controller.get_device_state()
             #print(f"HEIGHT: {height}")
             if height is None:
+                self._controller.set_device(None, None)
                 errors["base"] = "invalid_device"
             if not errors:
                 await self._controller.disconnect()
