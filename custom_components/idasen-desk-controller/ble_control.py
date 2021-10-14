@@ -99,6 +99,10 @@ class BLEController:
                 await self.client.disconnect()
             print('Disconnected')
 
+    async def pair_device(self):
+        if not IS_LINUX:
+            print("Try pairing")
+
     async def connect(self):
         """Attempt to connect to the desk"""
         # return client when the client is already connected

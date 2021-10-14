@@ -67,6 +67,9 @@ class DeskController:
                 filtered_devices[name] = devices[name]
         return filtered_devices
 
+    async def initial_device_setup(self):
+        """Pair device"""
+
     async def get_device_state(self):
         """Get desk state"""
         print("Get status")
