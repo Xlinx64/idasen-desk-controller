@@ -9,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import DOMAIN, MIN_HEIGHT, MAX_HEIGHT
 
 
 async def async_setup_entry(hass: HomeAssistant,
@@ -28,8 +28,7 @@ class DeskCover(CoverEntity):
     supported_features = SUPPORT_SET_POSITION | SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP
 
     def __init__(self, controller) -> None:
-        """Initialize the sensor."""
-        # Usual setup is done here. Callbacks are added in async_added_to_hass.
+        """Initialize the cover."""
         self._controller = controller
 
     async def async_added_to_hass(self) -> None:
@@ -98,11 +97,11 @@ class DeskCover(CoverEntity):
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
-        await self._controller.move_to_position(10000)
+        await self._controller.move_to_position(MAX_HEIGHT)
 
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Close the cover."""
-        await self._controller.move_to_position(0)
+        await self._controller.move_to_position(MIN_HEIGHT)
 
     async def async_set_cover_position(self, **kwargs: Any) -> None:
         """Close the cover."""
