@@ -167,20 +167,26 @@ class BLEController:
         for attempt in range(3):
             try:
                 print(f'Connecting - attempt {attempt}')
+                if client.is_connected:
+                    await self._setup_connection(client)
+                    return True
                 client.services = BleakGATTServiceCollection()
                 await client.connect(timeout=CONNECTION_TIMEOUT)
                 if client.is_connected:
-                    self._connection_change(client)
-                    client.set_disconnected_callback(self._connection_change)
-                    await self._subscribe(client, UUID_HEIGHT, self._height_data_callback)
-                    print(f"Connected {self.mac_address}")
-                    self._reconnect = True
+                    await self._setup_connection(client)
                     return True
             except BleakError as e:
                 print(f'Bluetooth Error {e}')
                 LOGGER.error(f'Bluetooth Error {e}')
             await asyncio.sleep(3)
         return False
+
+    async def _setup_connection(self, client):
+        self._connection_change(client)
+        client.set_disconnected_callback(self._connection_change)
+        await self._subscribe(client, UUID_HEIGHT, self._height_data_callback)
+        print(f"Connected {self.mac_address}")
+        self._reconnect = True
 
     def _connection_change(self, client):
         if not client.is_connected:
