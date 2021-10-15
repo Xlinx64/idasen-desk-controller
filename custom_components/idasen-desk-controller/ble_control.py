@@ -7,7 +7,6 @@ import os
 import struct
 import asyncio
 import pickle
-from appdirs import user_config_dir
 from bleak import BleakClient, BleakError, BleakScanner
 from bleak.backends.service import BleakGATTServiceCollection
 from .const import HEIGHT_TOLERANCE, MIN_HEIGHT, ADAPTER_NAME, SCAN_TIMEOUT, CONNECTION_TIMEOUT, LOGGER
@@ -35,10 +34,7 @@ COMMAND_UP = bytearray([0x47, 0x00])
 COMMAND_DOWN = bytearray([0x46, 0x00])
 COMMAND_STOP = bytearray([0xFF, 0x00])
 
-DEFAULT_CONFIG_DIR = user_config_dir('idasen-desk-controller')
-PICKLE_FILE = os.path.join(DEFAULT_CONFIG_DIR, 'desk.pickle')
-if not os.path.exists(DEFAULT_CONFIG_DIR):
-    os.makedirs(DEFAULT_CONFIG_DIR, exist_ok=True)
+PICKLE_FILE = os.path.join(os.getcwd(), 'desk.pickle')
 
 
 class BLEController:
@@ -109,7 +105,7 @@ class BLEController:
             if (device.address == mac_address):
                 print('Scanning - Desk Found')
                 return device
-        print(f'Scanning - Desk {self.mac_address} Not Found')
+        print(f'Scanning - Desk {mac_address} Not Found')
         return None
 
     async def disconnect(self):
@@ -123,7 +119,7 @@ class BLEController:
                 self.client.services = BleakGATTServiceCollection()
             print('Disconnected')
 
-    async def pair_device(self):
+    async def pair_device(self):  # TODO
         if IS_LINUX:
             print("Try pairing")
 
@@ -186,12 +182,13 @@ class BLEController:
             await asyncio.sleep(3)
         return False
 
-    async def _connection_change(self, client):
+    def _connection_change(self, client):
         if not client.is_connected:
             client.services = BleakGATTServiceCollection()
+            self.connection_change_callback()
             if self._reconnect:
                 LOGGER.error('Client did disconnect. Try reconnecting!')
-                await self.connect(self.mac_address, self.client)
+                asyncio.create_task(self.connect(self.mac_address, self.client))
         self.connection_change_callback()
 
     async def move_to_position(self, position):
@@ -315,7 +312,7 @@ class BLEController:
             try:
                 with open(PICKLE_FILE, 'rb') as f:
                     desk = pickle.load(f)
-                    if desk.address == mac_address and desk is not None:
+                    if desk is not None and desk.address == mac_address:
                         return desk
             except Exception:
                 pass
@@ -332,7 +329,7 @@ class BLEController:
         if IS_LINUX:
             try:
                 os.remove(PICKLE_FILE)
-                print('Connecting failed - Retrying without cached connection')
+                print('desk pickle removed')
             except OSError:
                 pass
 
