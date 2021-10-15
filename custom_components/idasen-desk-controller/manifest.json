@@ -6,7 +6,8 @@
   "codeowners": ["@Xilinx64"],
   "requirements": [
     "bleak==0.11.0",
-    "pexpect==4.8.0"
+    "pexpect==4.8.0",
+    "appdirs==1.4.4" 
   ],
   "config_flow": true,
   "version": "1.0.0"

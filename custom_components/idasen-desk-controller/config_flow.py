@@ -6,6 +6,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from .const import DOMAIN
 from .desk_control import DeskController
+import asyncio
 
 
 class IdasenControllerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -63,6 +64,7 @@ class IdasenControllerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_device"
             if not errors:
                 await self._controller.disconnect()
+                await asyncio.sleep(3)
                 await self.async_set_unique_id(self._controller.address)
                 self._abort_if_unique_id_configured()
                 return self._get_entry()
