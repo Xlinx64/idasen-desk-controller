@@ -3,7 +3,7 @@ DeskController handles Home Assistant communication
 """
 
 from .ble_control import BLEController
-from .const import HEIGHT_TOLERANCE, MIN_HEIGHT, MAX_HEIGHT
+from .const import HEIGHT_TOLERANCE, MIN_HEIGHT, MAX_HEIGHT, LOGGER
 
 TASKTYPE_MONITORING = "MONITORING"
 TASKTYPE_MOVE = "MOVE"
@@ -15,7 +15,7 @@ class DeskController:
 
     def __init__(self, name=None, address=None):
         """Initalize DeskController"""
-        print("Init DeskController")
+        LOGGER.debug("Init DeskController")
         self.name = name
         self.address = address
         self.height = 0

@@ -20,15 +20,6 @@ UUID_HEIGHT = '99fa0021-338a-1024-8a49-009c0215f78a'
 UUID_COMMAND = '99fa0002-338a-1024-8a49-009c0215f78a'
 UUID_REFERENCE_INPUT = '99fa0031-338a-1024-8a49-009c0215f78a'
 
-
-# COMMAND_UP = bytearray(struct.pack("<H", 71))
-# COMMAND_DOWN = bytearray(struct.pack("<H", 70))
-# COMMAND_STOP = bytearray(struct.pack("<H", 255))
-#
-# COMMAND_REFERENCE_INPUT_STOP = bytearray(struct.pack("<H", 32769))
-# COMMAND_REFERENCE_INPUT_UP = bytearray(struct.pack("<H", 32768))
-# COMMAND_REFERENCE_INPUT_DOWN = bytearray(struct.pack("<H", 32767))
-
 COMMAND_REFERENCE_INPUT_STOP = bytearray([0x01, 0x80])
 COMMAND_UP = bytearray([0x47, 0x00])
 COMMAND_DOWN = bytearray([0x46, 0x00])
@@ -42,13 +33,13 @@ class BLEController:
                  height_speed_callback=None,
                  connection_change_callback=None):
         """Set up the async event loop and signal handlers"""
-        print("Init BLEController")
+        LOGGER.debug("Init BLEController")
         self.client = None
         self.mac_address = mac_address
         self.height_speed_callback = height_speed_callback
         self.connection_change_callback = connection_change_callback
-        self._reconnect = True
 
+        self._reconnect = True
         self._is_moving = False
         self._target_height = None
         self._movement_count = 0
@@ -61,24 +52,23 @@ class BLEController:
         return self.client is not None and self.client.is_connected
 
     async def start_monitoring(self):
-        print("START MONITORING")
+        LOGGER.debug("Start Monitoring")
         self.client = await self.connect(self.mac_address, self.client)
         if self.client is None:
-            print(f'Cannot start monitoring for address: {self.mac_address}')
+            LOGGER.error(f'Cannot start monitoring for address: {self.mac_address}')
             return
         await self._read_state(self.client)
 
     async def get_current_state(self):
-        print("GET CURRENT STATE")
+        LOGGER.debug("Get current desk state")
         self.client = await self.connect(self.mac_address, self.client)
         if self.client is None:
-            print(f'Cannot start monitoring for address: {self.mac_address}')
+            LOGGER.error(f'Cannot get state for address: {self.mac_address}')
             return None, None
         return await self._read_state(self.client)
 
     async def _read_state(self, client):
         if client is None:
-            print(f'Could not get client: {self.mac_address}')
             LOGGER.error(f'Could not connect to client: {self.mac_address}')
             return None, None
         height_raw, speed_raw = await self._read_gatt_char()
@@ -91,37 +81,36 @@ class BLEController:
     async def scan(self, mac_address=None):
         """Scan for a bluetooth device with the configured address
         return it or return all devices if no address specified"""
-        print('Scanning')
+        LOGGER.debug('Start scanning')
         scanner = BleakScanner()
         devices = await scanner.discover(device=ADAPTER_NAME, timeout=SCAN_TIMEOUT)
         if not mac_address:
-            print(f"Found {len(devices)} devices using {ADAPTER_NAME}")
             device_dict = {}
             for device in devices:
-                print(device)
                 device_dict[device.name] = device.address
+            LOGGER.debug(f"Found {len(devices)} devices using {ADAPTER_NAME}, devices: {device_dict}")
             return device_dict
         for device in devices:
             if (device.address == mac_address):
-                print('Scanning - Desk Found')
+                LOGGER.debug('Scanning - Desk Found')
                 return device
-        print(f'Scanning - Desk {mac_address} Not Found')
+        LOGGER.warn(f'Scanning - Desk {mac_address} Not Found')
         return None
 
     async def disconnect(self):
-        print("Disconnect called")
+        LOGGER.debug("Disconnect called")
         self._reconnect = False
         if self.client:
-            print('Disconnecting')
+            LOGGER.debug('Disconnecting')
             await self.stop_movement()
             if self.client.is_connected:
                 await self.client.disconnect()
                 self.client.services = BleakGATTServiceCollection()
-            print('Disconnected')
+            LOGGER.debug('Disconnected')
 
     async def pair_device(self):  # TODO
         if IS_LINUX:
-            print("Try pairing")
+            LOGGER.debug("Try pairing")
 
     async def connect(self, mac_address, current_client):
         """Attempt to connect to the desk"""
@@ -133,22 +122,21 @@ class BLEController:
         pickled_Desk = self._unpickle_desk(mac_address)
 
         if current_client is not None:
-            print("Client available! Try connecting")
+            LOGGER.debug("Client available! Try connecting")
             if (await self._connect_client(current_client)):
                 return current_client
             else:
-                print("Stored client invalid! Remove self.client")
+                LOGGER.debug("Stored client invalid! Remove self.client")
                 self.client = None
 
         if pickled_Desk is not None:
-            print("Pickled desk available! Try connecting")
+            LOGGER.debug("Pickled desk available! Try connecting")
             client = BleakClient(pickled_Desk, device=ADAPTER_NAME)
             if (await self._connect_client(client)):
                 return client
 
         found_desk = await self.scan(mac_address)
         if found_desk is None:
-            print(f'Could not find desk {self.mac_address}')
             LOGGER.error(f'Could not find desk {self.mac_address}')
             return None
 
@@ -161,12 +149,12 @@ class BLEController:
 
     async def _connect_client(self, client):
         if client is None:
-            print("Cannot connect, client is None")
+            LOGGER.error("Cannot connect, client is None")
             return False
 
         for attempt in range(3):
             try:
-                print(f'Connecting - attempt {attempt}')
+                LOGGER.debug(f'Connecting - attempt {attempt}')
                 if client.is_connected:
                     await self._setup_connection(client)
                     return True
@@ -176,7 +164,6 @@ class BLEController:
                     await self._setup_connection(client)
                     return True
             except BleakError as e:
-                print(f'Bluetooth Error {e}')
                 LOGGER.error(f'Bluetooth Error {e}')
             await asyncio.sleep(3)
         return False
@@ -185,7 +172,7 @@ class BLEController:
         self._connection_change(client)
         client.set_disconnected_callback(self._connection_change)
         await self._subscribe(client, UUID_HEIGHT, self._height_data_callback)
-        print(f"Connected {self.mac_address}")
+        LOGGER.debug(f"Connected {self.mac_address}")
         self._reconnect = True
 
     def _connection_change(self, client):
@@ -200,7 +187,6 @@ class BLEController:
     async def move_to_position(self, position):
         self.client = await self.connect(self.mac_address, self.client)
         if self.client is None:
-            print(f'Could not get Client {self.mac_address}')
             LOGGER.error(f'Could not connect to {self.mac_address}')
             return
         self._target_height = self._mm_to_raw(position)
@@ -210,19 +196,18 @@ class BLEController:
             await asyncio.sleep(1)
             height_raw, speed_raw = await self._read_gatt_char()
             height, speed = self._format_height_speed(height_raw, speed_raw)
-            if self.height_speed_callback is not None:
-                self.height_speed_callback(height, speed)
+            self.height_speed_callback(height, speed)
 
     async def _move_to(self):
         """Move the desk to a specified height"""
-        initial_height, speed = await self._read_gatt_char()
-        self._direction = "UP" if self._target_height > initial_height else "DOWN"
+        height, speed = await self._read_gatt_char()
+        self._direction = "UP" if self._target_height > height else "DOWN"
         self._movement_count = 0
 
         # loop = asyncio.get_event_loop()
         # self._move_done = loop.create_future()
 
-        if not self._has_reached_target(initial_height):
+        if not self._has_reached_target(height):
             self._is_moving = True
             if self._direction == "UP":
                 asyncio.create_task(self._move_up())
@@ -241,8 +226,7 @@ class BLEController:
 
         if self._is_moving:
             self._movement_count = self._movement_count + 1
-            if self.height_speed_callback is not None:
-                self.height_speed_callback(height, speed)
+            self.height_speed_callback(height, speed)
             print("Height: {:4.0f}mm Target: {:4.0f}mm Speed: {:2.0f}mm/s".format(height, self._raw_to_mm(self._target_height), speed))
 
             # Stop if we have reached the target OR
@@ -272,9 +256,7 @@ class BLEController:
             elif self._direction == "DOWN" and self._movement_count == 6:
                 asyncio.create_task(self._move_down())
                 self._movement_count = 0
-
-        if self.height_speed_callback is not None:
-            self.height_speed_callback(height, speed)
+        self.height_speed_callback(height, speed)
 
     async def stop_movement(self):
         self._is_moving = False
@@ -335,7 +317,7 @@ class BLEController:
         if IS_LINUX:
             try:
                 os.remove(PICKLE_FILE)
-                print('desk pickle removed')
+                LOGGER.debug('Desk pickle removed')
             except OSError:
                 pass
 
