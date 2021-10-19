@@ -21,7 +21,7 @@ class DeskController:
         self.height = 0
         self.speed = 0
         self._callbacks = set()
-        self._ble_controller = BLEController(mac_address=address,
+        self._ble_controller = BLEController(address=address,
                                              height_speed_callback=self.height_speed_callback,
                                              connection_change_callback=self.publish_updates)
 
@@ -45,10 +45,10 @@ class DeskController:
         """Return if the desk is connected"""
         return self._ble_controller.is_connected
 
-    def set_device(self, name, mac_address):
+    def set_device(self, name, address):
         self.name = name
-        self.address = mac_address
-        self._ble_controller.mac_address = mac_address
+        self.address = address
+        self._ble_controller.address = address
 
     def height_speed_callback(self, height, speed):
         """Callback for the BLEController"""
