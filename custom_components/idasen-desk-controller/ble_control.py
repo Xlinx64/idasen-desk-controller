@@ -29,13 +29,13 @@ PICKLE_FILE = os.path.join(os.getcwd(), 'desk.pickle')
 
 
 class BLEController:
-    def __init__(self, mac_address=None,
+    def __init__(self, address=None,
                  height_speed_callback=None,
                  connection_change_callback=None):
         """Set up the async event loop and signal handlers"""
         LOGGER.debug("Init BLEController")
         self.client = None
-        self.mac_address = mac_address
+        self.address = address
         self.height_speed_callback = height_speed_callback
         self.connection_change_callback = connection_change_callback
 
@@ -53,23 +53,23 @@ class BLEController:
 
     async def start_monitoring(self):
         LOGGER.debug("Start Monitoring")
-        self.client = await self.connect(self.mac_address, self.client)
+        self.client = await self.connect(self.address, self.client)
         if self.client is None:
-            LOGGER.error(f'Cannot start monitoring for address: {self.mac_address}')
+            LOGGER.error(f'Cannot start monitoring for address: {self.address}')
             return
         await self._read_state(self.client)
 
     async def get_current_state(self):
         LOGGER.debug("Get current desk state")
-        self.client = await self.connect(self.mac_address, self.client)
+        self.client = await self.connect(self.address, self.client)
         if self.client is None:
-            LOGGER.error(f'Cannot get state for address: {self.mac_address}')
+            LOGGER.error(f'Cannot get state for address: {self.address}')
             return None, None
         return await self._read_state(self.client)
 
     async def _read_state(self, client):
         if client is None:
-            LOGGER.error(f'Could not connect to client: {self.mac_address}')
+            LOGGER.error(f'Could not connect to client: {self.address}')
             return None, None
         height_raw, speed_raw = await self._read_gatt_char()
         height, speed = self._format_height_speed(height_raw, speed_raw)
@@ -78,23 +78,23 @@ class BLEController:
             self.height_speed_callback(height, speed)
         return height, speed
 
-    async def scan(self, mac_address=None):
+    async def scan(self, address=None):
         """Scan for a bluetooth device with the configured address
         return it or return all devices if no address specified"""
         LOGGER.debug('Start scanning')
         scanner = BleakScanner()
         devices = await scanner.discover(device=ADAPTER_NAME, timeout=SCAN_TIMEOUT)
-        if not mac_address:
+        if not address:
             device_dict = {}
             for device in devices:
                 device_dict[device.name] = device.address
             LOGGER.debug(f"Found {len(devices)} devices using {ADAPTER_NAME}, devices: {device_dict}")
             return device_dict
         for device in devices:
-            if (device.address == mac_address):
+            if (device.address == address):
                 LOGGER.debug('Scanning - Desk Found')
                 return device
-        LOGGER.warn(f'Scanning - Desk {mac_address} Not Found')
+        LOGGER.warn(f'Scanning - Desk {address} Not Found')
         return None
 
     async def disconnect(self):
@@ -112,14 +112,14 @@ class BLEController:
         if IS_LINUX:
             LOGGER.debug("Try pairing")
 
-    async def connect(self, mac_address, current_client):
+    async def connect(self, address, current_client):
         """Attempt to connect to the desk"""
         # Attempt to load and connect to the pickled desk
         if current_client is not None and current_client.is_connected:
             self._reconnect = True
             return current_client
 
-        pickled_Desk = self._unpickle_desk(mac_address)
+        pickled_Desk = self._unpickle_desk(address)
 
         if current_client is not None:
             LOGGER.debug("Client available! Try connecting")
@@ -135,9 +135,9 @@ class BLEController:
             if (await self._connect_client(client)):
                 return client
 
-        found_desk = await self.scan(mac_address)
+        found_desk = await self.scan(address)
         if found_desk is None:
-            LOGGER.error(f'Could not find desk {self.mac_address}')
+            LOGGER.error(f'Could not find desk {self.address}')
             return None
 
         self._remove_pickled_desk()
@@ -172,7 +172,7 @@ class BLEController:
         self._connection_change(client)
         client.set_disconnected_callback(self._connection_change)
         await self._subscribe(client, UUID_HEIGHT, self._height_data_callback)
-        LOGGER.debug(f"Connected {self.mac_address}")
+        LOGGER.debug(f"Connected {self.address}")
         self._reconnect = True
 
     def _connection_change(self, client):
@@ -181,13 +181,13 @@ class BLEController:
             self.connection_change_callback()
             if self._reconnect:
                 LOGGER.error('Client did disconnect. Try reconnecting!')
-                asyncio.create_task(self.connect(self.mac_address, self.client))
+                asyncio.create_task(self.connect(self.address, self.client))
         self.connection_change_callback()
 
     async def move_to_position(self, position):
-        self.client = await self.connect(self.mac_address, self.client)
+        self.client = await self.connect(self.address, self.client)
         if self.client is None:
-            LOGGER.error(f'Could not connect to {self.mac_address}')
+            LOGGER.error(f'Could not connect to {self.address}')
             return
         self._target_height = self._mm_to_raw(position)
         await self._move_to()
@@ -294,13 +294,13 @@ class BLEController:
             # This happens on windows
             pass
 
-    def _unpickle_desk(self, mac_address):
+    def _unpickle_desk(self, address):
         """Load a Bleak device config from a pickle file and check that it is the correct device"""
         if IS_LINUX:
             try:
                 with open(PICKLE_FILE, 'rb') as f:
                     desk = pickle.load(f)
-                    if desk is not None and desk.address == mac_address:
+                    if desk is not None and desk.address == address:
                         return desk
             except Exception:
                 pass

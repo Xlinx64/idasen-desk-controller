@@ -85,7 +85,6 @@ class DeskController:
     async def move_to_position(self, percentage):
         """Move to percentage"""
         height = int(percentage*((MAX_HEIGHT-MIN_HEIGHT)/100) + MIN_HEIGHT)
-        print(height)
         if height < MIN_HEIGHT:
             height = MIN_HEIGHT
         elif height > MAX_HEIGHT:
