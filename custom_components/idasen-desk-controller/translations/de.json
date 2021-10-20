@@ -7,12 +7,12 @@
     },
     "step": {
       "user": {
-        "title": "Idasen-Controller vorbereiten",
-        "description": "Steuerung in Kopplungsmodus bringen und fortfahren"
+        "title": "Idasen Controller vorbereiten",
+        "description": "Suche sarten"
       },
       "connection": {
         "title": "Idasen Controller verbinden",
-        "description": "Gerät auswählen",
+        "description": "Steuerung in Kopplungsmodus bringen und Gerät auswählen",
         "data": {
           "name": "Name"
         }

@@ -7,12 +7,12 @@
     },
     "step": {
       "user": {
-        "title": "Prepare Idasen-Controller",
-        "description": "Set desk in pairing mode and continue"
+        "title": "Idasen Controller",
+        "description": "Start scanning"
       },
       "connection": {
         "title": "Connect Idasen Desk Controller",
-        "description": "Select device",
+        "description": "Set desk in pairing mode and select device",
         "data": {
           "name": "Desk Name"
         }
