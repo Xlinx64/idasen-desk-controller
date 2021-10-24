@@ -100,12 +100,11 @@ class BLEController:
     async def disconnect(self):
         LOGGER.debug("Disconnect called")
         self._reconnect = False
-        if self.client:
+        if self.client and self.client.is_connected:
             LOGGER.debug('Disconnecting')
             await self.stop_movement()
-            if self.client.is_connected:
-                await self.client.disconnect()
-                self.client.services = BleakGATTServiceCollection()
+            await self.client.disconnect()
+            self.client.services = BleakGATTServiceCollection()
             LOGGER.debug('Disconnected')
 
     async def pair_device(self):  # TODO
