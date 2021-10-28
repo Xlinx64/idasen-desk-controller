@@ -8,7 +8,7 @@
     "step": {
       "user": {
         "title": "Idasen Controller",
-        "description": "Start scanning"
+        "description": "Start scanning for compatible devices"
       },
       "connection": {
         "title": "Connect Idasen Desk Controller",

@@ -8,7 +8,7 @@
     "step": {
       "user": {
         "title": "Idasen Controller vorbereiten",
-        "description": "Suche sarten"
+        "description": "Suche nach kompatiblen Geräten starten"
       },
       "connection": {
         "title": "Idasen Controller verbinden",
