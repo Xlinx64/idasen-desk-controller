@@ -9,5 +9,5 @@
     "pexpect==4.8.0"
   ],
   "config_flow": true,
-  "version": "1.0.0"
+  "version": "0.1.0"
 }
