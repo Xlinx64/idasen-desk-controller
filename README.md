@@ -29,6 +29,16 @@ This project is work in progress. It is also my first python and open source pro
 Upload the custom component to Home Assistant's custom_components directory and restart the service.
 
 ## Configuration
+### Pairing
+Pairing needs to be done via terminal for now.  
+Instuctions:
+1. Start bluetoothctl: ```bluetoothctl```  
+2. Start scan: ```scan on```
+3. Wait until you see the mac address of the desk
+4. Pair desk: ```pair 00:00:00:00:00:00```
+5. Disconnect: ```disconnect 00:00:00:00:00:00```
+
+### Home Assistant configuration
 Add the integration through the Home Assistant interface.
 
 ## Awesome projects
